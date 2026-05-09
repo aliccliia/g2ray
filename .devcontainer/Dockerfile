@@ -1,16 +1,12 @@
-FROM debian:bookworm-slim
+FROM alpine:latest
 
-COPY install.sh /app/install.sh
+RUN apk add --no-cache curl bash uuidgen
 
-WORKDIR /app
+# Install Xray-core
+RUN bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash git curl wget unzip tzdata openssl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Copy the setup script
+COPY setup_xray.sh /usr/local/bin/setup_xray.sh
+RUN chmod +x /usr/local/bin/setup_xray.sh
 
-RUN chmod +x /app/install.sh && /app/install.sh
-COPY config.json /etc/config.json
-
-RUN echo 'echo -e "\n✅ VLESS LINK:\nvless://550e8400-e29b-41d4-a716-446655440000@94.130.50.12:443?encryption=none&security=tls&type=xhttp&mode=packet-up&sni=${CODESPACE_NAME}-443.app.github.dev&path=%2F#ghtun"' >> /etc/bash.bashrc
-
-CMD ["/usr/local/bin/xray", "-c", "/etc/config.json"]
+EXPOSE 443
